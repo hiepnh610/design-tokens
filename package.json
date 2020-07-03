@@ -1,0 +1,23 @@
+{
+  "name": "design-tokens",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hiepnh610/design-tokens.git"
+  },
+  "author": "Hiep Nguyen",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hiepnh610/design-tokens/issues"
+  },
+  "homepage": "https://github.com/hiepnh610/design-tokens#readme",
+  "dependencies": {
+    "dotenv": "^8.2.0",
+    "node-fetch": "^2.6.0"
+  }
+}
