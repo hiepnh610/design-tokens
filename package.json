@@ -17,7 +17,9 @@
   },
   "homepage": "https://github.com/hiepnh610/design-tokens#readme",
   "dependencies": {
+    "chalk": "^4.1.0",
     "dotenv": "^8.2.0",
+    "lodash": "^4.17.19",
     "node-fetch": "^2.6.0",
     "style-dictionary": "^2.10.0"
   }

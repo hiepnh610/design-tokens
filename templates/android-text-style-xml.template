@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+<% _.each(allProperties, function(prop) {
+  var output = "";
+  output += "\n";
+  output += "\t<style name=\"" + prop.styleName + "\">";
+  _.each(prop.child, function(item) {
+    output += "\t\t<item name=\"" + item.name + "\">";
+    output += item.value;
+    output += "</item>";
+  });
+  output += "</style>";
+  output += "\n";
+  print(output);
+});
+%>
+</resources>

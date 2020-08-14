@@ -1,6 +1,15 @@
 require('dotenv').config();
+const util = require('util');
 const fetch = require('node-fetch');
 const fs = require('fs');
+const _ = require('lodash');
+const chalk = require('chalk');
+const StyleDictionary = require('style-dictionary').extend('./config.json');
+
+StyleDictionary.registerFormat({
+  name: 'android/text-style-xml',
+  formatter: _.template(fs.readFileSync(__dirname + '/templates/android-text-style-xml.template'))
+});
 
 const rgbToHex = (r, g, b) => {
   return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
@@ -52,35 +61,38 @@ const getColors = async () => {
     'Base Color Palette'
   ];
   const frameData = await filterFrameData();
-  pagesList.map((page) => {
+
+  return pagesList.map((page) => {
     const baseColor = frameData.find(item => item.name === page);
 
-    const instanceBaseColor = baseColor.children.filter((item) => {
+    return baseColor.children.filter((item) => {
       return item.type === 'INSTANCE';
     });
 
-    instanceBaseColor.map((colorCmp) => {
-      const fillsDataFromColorCmp = colorCmp.children[0].fills[0];
+    // instanceBaseColor.forEach((colorCmp) => {
+      // const fillsDataFromColorCmp = colorCmp.children[0].fills[0];
 
-      if (fillsDataFromColorCmp.type === 'SOLID') {
-        const opacity = fillsDataFromColorCmp.opacity;
-        const opacityFixed = opacity ? Number(opacity.toFixed(1)) : 0;
-        const [r, g, b] = Object.values(fillsDataFromColorCmp.color)
-        .map((value) => {
-          return Number(((value + opacityFixed) * 255).toFixed(0));
-        });
+      // colors.push(colorCmp.children);
 
-        // console.log({
-        //   name: colorCmp.children[1].name,
-        //   value: rgbToHex(r, g, b)
-        // });
-      }
+      // if (fillsDataFromColorCmp.type === 'SOLID') {
+      //   const opacity = fillsDataFromColorCmp.opacity;
+      //   const opacityFixed = opacity ? Number(opacity.toFixed(1)) : 0;
+      //   const [r, g, b] = Object.values(fillsDataFromColorCmp.color)
+      //   .map((value) => {
+      //     return Number(((value + opacityFixed) * 255).toFixed(0));
+      //   });
 
-      if (fillsDataFromColorCmp.type === 'GRADIENT_LINEAR') {
-        console.log('fillsDataFromColorCmp', fillsDataFromColorCmp);
-      }
+      //   // console.log({
+      //   //   name: colorCmp.children[1].name,
+      //   //   value: rgbToHex(r, g, b)
+      //   // });
+      // }
+
+      // if (fillsDataFromColorCmp.type === 'GRADIENT_LINEAR') {
+      //   // console.log('fillsDataFromColorCmp', fillsDataFromColorCmp);
+      // }
     });
-  });
+  // });
 };
 
 const getTypo = async () => {
@@ -92,25 +104,72 @@ const getTypo = async () => {
   const pageName = frameData.find(item => item.name === 'Text Style');
   const frameType = pageName.children.filter(item => item.type === 'FRAME');
 
-  let dataConfig = {
+  // console.log('frameType', frameType[0].children[0].children[0].fills);
+
+  const dataConfig = {
     size: {
-      font: {}
+      font: await frameType[0].children.map(async (item) => {
+        const childrenItem = item.children[0];
+        const colorName = await getColorName(childrenItem.fills[0].color);
+
+        return {
+          styleName: childrenItem.characters,
+          fontSize: childrenItem.style.fontSize,
+          lineHeight: childrenItem.style.lineHeightPx,
+          fontFamily: childrenItem.style.fontWeight === 400 ? 'regular' : 'medium',
+          color: colorName
+        }
+      })
     }
   };
-
-  frameType[0].children.forEach((item) => {
-    dataConfig.size.font[item.children[0].characters] = {
-      value: item.children[0].style.fontSize
-    };
-  });
 
   return dataConfig;
 };
 
-const init = async () => {
-  const content = await getTypo();
+const getColorName = async (source) => {
+  const colors = _.flatten(await getColors());
+  const [r, g, b] = Object.values(source);
+  let colorName = '';
 
-  fs.writeFileSync('properties/size/test.json', JSON.stringify(content));
+  colors.forEach((item) => {
+    const colorItem = item.children[0].fills[0].color;
+
+    console.log('colors', item.children[0].fills[0].color);
+    console.log('colors', item.children[1]);
+
+    if (colorItem) {
+      const isRed = r === colorItem.r;
+      const isGreen = g === colorItem.g;
+      const isBlue = b === colorItem.b;
+
+      if (isRed && isGreen && isBlue) {
+        colorName = item.children[1].name
+      }
+    }
+  });
+
+  return colorName;
+};
+
+const init = async () => {
+  // console.log(
+  //   'getTypo',
+  //   chalk.cyan(
+  //     util.inspect(
+  //       await getTypo(),
+  //       {
+  //         showHidden: false,
+  //         depth: null
+  //       }
+  //     )
+  //   )
+  // );
+
+  await getTypo()
+
+  // fs.writeFileSync('properties/size/test.json', JSON.stringify(content));
 };
 
 init();
+
+// StyleDictionary.buildAllPlatforms();
